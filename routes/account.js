@@ -19,37 +19,34 @@ router.get("/balance",authMiddleware,async (req,res)=>{
 })
 
 router.post("/transfer", authMiddleware, async (req, res) => {
-    const session = await mongoose.startSession(); // Start the session
+    const session = await mongoose.startSession();
 
     try {
-        session.startTransaction(); // Start the transaction
-        const { amount, to } = req.body; // Expect 'toName' instead of 'to'
+        session.startTransaction();
+        const { amount, to } = req.body;
 
-        // Find the sender's account
         const account = await Account.findOne({ userId: req.userId }).session(session);
-        if (!account || account.balance < amount) { // Check balance property
+        if (!account || account.balance < amount) {
             await session.abortTransaction();
             return res.status(400).json({ msg: "Insufficient balance" });
         }
 
-        // Find the recipient's account by name
-        const toAccount = await Account.findOne({ name: to }).session(session); // Updated to search by name
+        const toAccount = await Account.findOne({ userId : to }).session(session);
         if (!toAccount) {
             await session.abortTransaction();
             return res.status(400).json({ msg: "Account not found" });
         }
 
-        // Update the balances within the transaction
         await Account.updateOne({ userId: req.userId }, { $inc: { balance: -amount } }, { session });
-        await Account.updateOne({ userId: toAccount.userId }, { $inc: { balance: amount } }, { session }); // Use the userId of the recipient
+        await Account.updateOne({ userId: toAccount.userId }, { $inc: { balance: amount } }, { session });
 
-        await session.commitTransaction(); // Commit the transaction
+        await session.commitTransaction();
         res.status(200).json({ msg: "Transfer successful" });
     } catch (error) {
-        await session.abortTransaction(); // Abort on error
+        await session.abortTransaction();
         res.status(500).json({ error: error.message });
     } finally {
-        session.endSession(); // End the session
+        session.endSession();
     }
 });
 

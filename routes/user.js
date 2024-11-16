@@ -7,22 +7,22 @@ const { JWT_SECRET } = require("../config"); // fixed import
 const router = express.Router();
 
 const userSchema = zod.object({
-    name: zod.string(),
-    email: zod.string().email(),
-    password: zod.string().min(8)
+    name: zod.string().min(1, "Name is required"),
+    email: zod.string().email("Invalid email"),
+    password: zod.string().min(6, "Password must be at least 6 characters long"),
 });
 
+
 router.post("/signup", async function (req, res) {
-    try {
         const body = req.body;
         const { success } = userSchema.safeParse(body);
         if (!success) {
-            return res.json({ msg: "Input is Wrong" });
+            return res.status(401).json({ msg: "Input is Wrong kindly check the input" });
         }
 
         const user = await User.findOne({ email: body.email });
         if (user) {
-            return res.json({ msg: "Email is already taken" });
+            return res.status(401).json({ msg: "Email is already taken" });
         }
 
         const dbUser = await User.create(body);
@@ -37,10 +37,8 @@ router.post("/signup", async function (req, res) {
             balance: 1 + Math.random() *10000
         })
 
-        res.json({ msg: "User Created Successfully", token });
-    } catch (error) {
-        res.status(500).json({ msg: "An error occurred during signup", error: error.message });
-    }
+        res.status(200).json({ msg: "User Created Successfully", token });
+
 });
 
 const signinSchema = zod.object({
@@ -48,8 +46,9 @@ const signinSchema = zod.object({
     password: zod.string().min(8)
 });
 
-router.post("/signin", async function (req, res) {
+router.post("/login", async function (req, res) {
     try {
+        const body = req.body
         const { success } = signinSchema.safeParse(req.body);
         if (!success) {
             return res.status(411).json({ msg: "Input is Wrong" });
@@ -57,18 +56,19 @@ router.post("/signin", async function (req, res) {
 
         const user = await User.findOne({ email: req.body.email });
         if (!user) {
-            return res.json({ msg: "Invalid Email" });
+            return res.status(401).json({ msg: "Invalid Email" });
         }
-        if (user.password != req.body.password) {
-            return res.json({ msg: "Invalid password" });
+        if (user.password !== req.body.password) {
+            return res.status(401).json({ msg: "Invalid password" });
         }
 
         const token = jwt.sign({ userId: user._id }, JWT_SECRET);
-        res.json({ msg: "Login Successfully", token });
+        res.status(200).json({ msg: "Login Successfully", token, email : body.email });
     } catch (error) {
-        res.status(500).json({ msg: "An error occurred during signin", error: error.message });
+        res.status(500).json({ msg: "An error occurred during Login", error: error.message });
     }
 });
+
 
 const updateSchema = zod.object({
     name: zod.string(),
