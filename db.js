@@ -1,7 +1,8 @@
 const mongoose = require("mongoose");
 const { Schema, models } = require("mongoose");
 const { number } = require("zod");
-mongoose.connect("mongodb+srv://singh0369aman:Amansingh0369@aman.6sexufp.mongodb.net/Paytm");
+require("dotenv").config();
+mongoose.connect(process.env.MONGO_URI);
 
 const userSchema = new Schema({
     name: {
