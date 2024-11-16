@@ -1,8 +1,12 @@
 {
   "version": 2,
-  "functions": {
-    "api/**/*.{js,ts}": {
-      "runtime": "nodejs16.x"
+  "builds": [
+    {
+      "src": "index.js",
+      "use": "@vercel/node"
     }
+  ],
+  "env": {
+    "MONGO_URI": "mongodb+srv://singh0369aman:Amansingh0369@aman.6sexufp.mongodb.net/Paytm"
   }
 }
